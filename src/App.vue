@@ -16,25 +16,40 @@ export default {
   data() {
     return {
       columns: [
-        { label: '日期', prop: 'date' },
+        {
+          label: '日期',
+          fixed: 'left',
+          formatter: ({ row, h }) => h('el-tag', row.date)
+        },
         [
-          { label: '早餐', prop: 'z', prefix: '----' },
+          {
+            label: '早餐',
+            formatter: ({ row, h }) => h('el-tag', row.z)
+          },
           { label: '晚餐', prop: 'w', suffix: '====' }
         ],
         {
           label: '配送信息',
           children: [
-            { label: '姓名', prop: 'name', prefix: '-----', formatter: (row) => row.name },
+            { label: '姓名', formatter: ({ row }) => row?.name },
             {
               label: '地址',
               children: [
                 {
                   label: '省',
-                  prop: 'sheng'
+                  prop: 'sheng',
+                  suffix: '===='
                 },
                 {
                   label: '市',
-                  prop: 'shi'
+                  formatter: ({ row, h }) => h('el-input', {
+                    model: {
+                      value: row.shi,
+                      callback: (val) => {
+                        row.shi = val
+                      }
+                    }
+                  })
                 },
                 {
                   label: '区',
@@ -73,6 +88,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

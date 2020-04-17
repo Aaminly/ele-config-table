@@ -7,22 +7,46 @@ function flatArray(arr) {
 // 多级表头
 function multipleTitle(data, h) {
   return [data.map(item => {
-    if (item.children && item.children.length) {
-      return h('el-table-column', { props: item }, multipleTitle(item.children, h))
-    } else {
-      return h('el-table-column', { props: item })
+
+    const props = {
+      ...item,
+      ...formatProps({ ...item, h }),
     }
+
+    return h('el-table-column', { props },
+      (item.children && item.children.length) ? multipleTitle(item.children, h) : null)
+
   })]
+}
+
+// 格式化props
+function formatProps({ formatter, prefix = '', suffix = '', prop, h }) {
+  let fixFormatter = {}
+
+  if (formatter) {
+    // 有格式化数据情况
+    fixFormatter.formatter = (row, column, cellValue, index) =>
+      formatter({ row, column, cellValue, index, h })
+  } else if (prefix || suffix) {
+    // 有前、后缀情况
+    fixFormatter.formatter = row => `${prefix}${row[prop]}${suffix}`
+  }
+  return fixFormatter
+}
+
+// 样式对象转样式字符串
+function styleO2S(styleO) {
+  let styleS = ''
+  for (let i in styleO) {
+    styleS += `${i}:${styleO[i]};`
+  }
+  return styleS
 }
 
 export default {
   functional: true,
   name: 'EleConfigTable',
   props: {
-    width: {
-      type: String,
-      default: '100%'
-    },
     data: {
       required: true,
       type: Array,
@@ -43,10 +67,9 @@ export default {
     }
   },
   render(h, vm) {
-    const { data, columns, childType } = vm.props
+    const { props: { data, columns, childType }, data: { staticStyle } } = vm
 
     // 存在子集情况
-
     // 获取合并行列的规则
     let _$start = 0
     let _$end = 0
@@ -76,6 +99,9 @@ export default {
     const formatColumns = isChildren ? flatArray(columns) : columns
 
     return h('el-table', {
+      attrs: {
+        style: styleO2S(staticStyle)
+      },
       props: {
         data: formatData,
         [isChildren ? 'spanMethod' : null]({ row, columnIndex }) {
@@ -96,19 +122,10 @@ export default {
       }
     }, formatColumns.map(column => {
       const { prefix = '', suffix = '', formatter, children, ...columnProps } = column
-      let fixFormatter = {}
-
-      if (formatter) {
-        // 有格式化数据情况
-        fixFormatter.formatter = formatter
-      } else if (prefix || suffix) {
-        // 有前、后缀情况
-        fixFormatter.formatter = row => `${prefix}${row[columnProps.prop]}${suffix}`
-      }
 
       const props = {
         ...columnProps,
-        ...fixFormatter,
+        ...formatProps({ prefix, suffix, formatter, prop: columnProps.prop, h }),
       }
 
       let content = null
