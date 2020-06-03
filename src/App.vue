@@ -1,9 +1,22 @@
 <template>
   <div>
-    <EleConfigTable
+    <!-- <EleConfigTable
       :data="tableData"
       :columns="columns"
-    />
+      show-summary
+    /> -->
+    <EleConfigTable
+      :data="tableData"
+      :columns="columns2"
+      show-summary
+    >
+      <template v-slot:user="slotProps">
+        <div>
+          <p>123</p>
+          <p>{{JSON.stringify(slotProps)}}</p>
+        </div>
+      </template>
+    </EleConfigTable>
   </div>
 </template>
 
@@ -15,23 +28,36 @@ export default {
   },
   data() {
     return {
+      columns2: [
+        {
+          type: 'expand',
+          expand: 'user'
+        },
+        {
+          label: '日期',
+          formatter: (row) => this._c('el-tag', row.date)
+        },
+        {
+          label: '姓名',
+          prop: 'name'
+        },
+      ],
       columns: [
         {
           label: '日期',
-          fixed: 'left',
-          formatter: ({ row, h }) => h('el-tag', row.date)
+          formatter: (row) => this._c('el-tag', row.date)
         },
         [
           {
             label: '早餐',
-            formatter: ({ row, h }) => h('el-tag', row.z)
+            formatter: (row) => this._c('el-tag', row.z)
           },
           { label: '晚餐', prop: 'w', suffix: '====' }
         ],
         {
           label: '配送信息',
           children: [
-            { label: '姓名', formatter: ({ row }) => row?.name },
+            { label: '姓名', formatter: (row) => row?.name },
             {
               label: '地址',
               children: [
@@ -42,7 +68,13 @@ export default {
                 },
                 {
                   label: '市',
-                  formatter: ({ row, h }) => h('el-input', {
+                  formatter: (row) => this._c('el-input', {
+                    attrs: {
+                      maxlength: "10",
+                    },
+                    props: {
+                      showWordLimit: true
+                    },
                     model: {
                       value: row.shi,
                       callback: (val) => {
@@ -74,7 +106,7 @@ export default {
         ]
       }, {
         date: '2016-05-04',
-        name: '王小虎',
+        name: '王22',
         address: '上海市普陀区金沙江路 1517 弄',
         sheng: '陕西省',
         shi: '西安市',

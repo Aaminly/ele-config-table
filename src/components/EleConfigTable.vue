@@ -1,4 +1,5 @@
 <script>
+/* eslint-disable no-unused-vars */
 // 扁平化
 function flatArray(arr) {
   return arr.reduce((curr, next) => curr.concat(Array.isArray(next) ? flatArray(next) : next), [])
@@ -10,7 +11,7 @@ function multipleTitle(data, h) {
 
     const props = {
       ...item,
-      ...formatProps({ ...item, h }),
+      ...formatProps({ ...item }),
     }
 
     return h('el-table-column', { props },
@@ -20,13 +21,13 @@ function multipleTitle(data, h) {
 }
 
 // 格式化props
-function formatProps({ formatter, prefix = '', suffix = '', prop, h }) {
+function formatProps({ formatter, prefix = '', suffix = '', prop }) {
   let fixFormatter = {}
 
   if (formatter) {
     // 有格式化数据情况
-    fixFormatter.formatter = (row, column, cellValue, index) =>
-      formatter({ row, column, cellValue, index, h })
+    fixFormatter.formatter = (...args) =>
+      formatter(...args)
   } else if (prefix || suffix) {
     // 有前、后缀情况
     fixFormatter.formatter = row => `${prefix}${row[prop]}${suffix}`
@@ -43,31 +44,13 @@ function styleO2S(styleO) {
   return styleS
 }
 
+let index = 0
+
 export default {
   functional: true,
   name: 'EleConfigTable',
-  props: {
-    data: {
-      required: true,
-      type: Array,
-      default: () => ([])
-    },
-    columns: {
-      required: true,
-      type: Array,
-      default: () => ([])
-    },
-    childType: {
-      type: String,
-      default: 'children'
-    }
-  },
-  data() {
-    return {
-    }
-  },
-  render(h, vm) {
-    const { props: { data, columns, childType }, data: { staticStyle } } = vm
+  render(h, context) {
+    const { props: { data, columns, childType }, data: { staticStyle, scopedSlots } } = context
 
     // 存在子集情况
     // 获取合并行列的规则
@@ -98,7 +81,7 @@ export default {
     // 格式化columns
     const formatColumns = isChildren ? flatArray(columns) : columns
 
-    return h('el-table', {
+    const template = h('el-table', {
       attrs: {
         style: styleO2S(staticStyle)
       },
@@ -120,12 +103,12 @@ export default {
           }
         }
       }
-    }, formatColumns.map(column => {
+    }, formatColumns.map((column) => {
       const { prefix = '', suffix = '', formatter, children, ...columnProps } = column
 
       const props = {
         ...columnProps,
-        ...formatProps({ prefix, suffix, formatter, prop: columnProps.prop, h }),
+        ...formatProps({ prefix, suffix, formatter, prop: columnProps.prop }),
       }
 
       let content = null
@@ -133,10 +116,21 @@ export default {
         content = multipleTitle(children, h)
       }
 
+      if (props.type === 'expand') {
+        if (!props.expand || !scopedSlots[props.expand]) {
+          throw new Error('Could not find the extension template slot or the slot name is inconsistent with the extension name')
+        }
+      }
+      console.log(index);
+
       return h('el-table-column', {
-        props
-      }, content)
+        props,
+      }, props.type === 'expand' ? scopedSlots[props.expand]({ index }) : content)
     }))
+
+
+    index++
+    return template
   }
 
 }
